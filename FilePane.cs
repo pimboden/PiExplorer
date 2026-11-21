@@ -345,7 +345,13 @@ internal sealed class FilePane : UserControl
     {
         var sel = _list.SelectedItems.Count;
         _status.Text = "  " + Loc.T("status.items", _list.Items.Count) + (sel > 0 ? "   |   " + Loc.T("status.sel", sel) : "");
+        StatusChanged?.Invoke(this);
     }
+
+    public event Action<FilePane>? StatusChanged;
+
+    /// <summary>Full path of the single selected item, else the folder shown ("" = This PC).</summary>
+    public string FullPathInfo => SelectedPaths is { Count: 1 } one ? one[0] : CurrentPath;
 
     private static string FormatSize(long b)
     {

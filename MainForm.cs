@@ -5,6 +5,18 @@ internal sealed class MainForm : Form
     private readonly TableLayoutPanel _host = new() { Dock = DockStyle.Fill, RowCount = 1, Padding = new Padding(2) };
     private readonly List<FilePane> _panes = new();
     private FilePane? _active, _previous;
+    // read-only text box (not a label) so the path can be selected and copied
+    private readonly TextBox _pathBar = new()
+    {
+        Dock = DockStyle.Bottom, ReadOnly = true, BorderStyle = BorderStyle.FixedSingle,
+        BackColor = SystemColors.Control,
+    };
+
+    private void UpdatePathBar()
+    {
+        var p = _active?.FullPathInfo ?? "";
+        _pathBar.Text = p.Length == 0 ? Loc.T("thispc") : p;
+    }
 
     public MainForm()
     {
@@ -48,6 +60,7 @@ internal sealed class MainForm : Form
         Controls.Add(_host);
         Controls.Add(splitter);
         Controls.Add(favs);
+        Controls.Add(_pathBar); // added after favs so it spans the full window width
         Controls.Add(tools);
         Controls.Add(BuildMenu()); // added last = docked at the very top
         Loc.Changed += ApplyLanguage;
@@ -111,9 +124,156 @@ internal sealed class MainForm : Form
         AddLang("es", null, "Español");
 
         settings.DropDownItems.Add(language);
+
+        var profiles = new ToolStripMenuItem();
+        _localized.Add((profiles, "menu.profiles"));
+        profiles.DropDownOpening += (_, _) => FillProfilesMenu(profiles);
+        profiles.DropDownItems.Add(new ToolStripMenuItem()); // placeholder so the dropdown can open
+
         var menu = new MenuStrip();
+        menu.Items.Add(profiles);
         menu.Items.Add(settings);
         return menu;
+    }
+
+    // ---------------------------------------------------------------- profiles (named sets of panes)
+
+    private sealed class ProfileData
+    {
+        public List<string> Panes { get; set; } = new();
+        public int Active { get; set; }
+    }
+
+    private static readonly string ProfilesPath = Path.Combine(
+        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "PiExplorer", "profiles.json");
+
+    private static Dictionary<string, ProfileData> LoadProfiles()
+    {
+        try
+        {
+            if (File.Exists(ProfilesPath))
+                return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, ProfileData>>(File.ReadAllText(ProfilesPath)) ?? new();
+        }
+        catch { /* unreadable file: treat as empty */ }
+        return new();
+    }
+
+    private bool StoreProfiles(Dictionary<string, ProfileData> all)
+    {
+        try
+        {
+            Directory.CreateDirectory(Path.GetDirectoryName(ProfilesPath)!);
+            var tmp = ProfilesPath + ".tmp";
+            File.WriteAllText(tmp, System.Text.Json.JsonSerializer.Serialize(all, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+            File.Move(tmp, ProfilesPath, true); // never leave a half-written file behind
+            return true;
+        }
+        catch (Exception ex) { MessageBox.Show(this, ex.Message, Text); return false; }
+    }
+
+    private void FillProfilesMenu(ToolStripMenuItem root)
+    {
+        root.DropDownItems.Clear();
+        var all = LoadProfiles();
+        var save = new ToolStripMenuItem(Loc.T("prof.save"));
+        save.Click += (_, _) => SaveProfile();
+        root.DropDownItems.Add(save);
+        root.DropDownItems.Add(new ToolStripSeparator());
+        if (all.Count == 0)
+        {
+            root.DropDownItems.Add(new ToolStripMenuItem(Loc.T("prof.none")) { Enabled = false });
+            return;
+        }
+        var names = all.Keys.OrderBy(n => n, StringComparer.CurrentCultureIgnoreCase).ToList();
+        foreach (var name in names)
+        {
+            var n = name;
+            var item = new ToolStripMenuItem(n) { ToolTipText = string.Join("\n", all[n].Panes) };
+            item.Click += (_, _) => LoadProfile(n);
+            root.DropDownItems.Add(item);
+        }
+        var update = new ToolStripMenuItem(Loc.T("prof.update"));
+        foreach (var name in names)
+        {
+            var n = name;
+            var u = new ToolStripMenuItem(n);
+            u.Click += (_, _) =>
+            {
+                if (MessageBox.Show(this, Loc.T("prof.confirmupdate", n), Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                var cur = LoadProfiles();
+                cur[n] = CurrentProfile();
+                StoreProfiles(cur);
+            };
+            update.DropDownItems.Add(u);
+        }
+        var del = new ToolStripMenuItem(Loc.T("prof.delete"));
+        foreach (var name in names)
+        {
+            var n = name;
+            var d = new ToolStripMenuItem(n);
+            d.Click += (_, _) =>
+            {
+                if (MessageBox.Show(this, Loc.T("prof.confirmdelete", n), Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+                var cur = LoadProfiles();
+                if (cur.Remove(n)) StoreProfiles(cur);
+            };
+            del.DropDownItems.Add(d);
+        }
+        root.DropDownItems.Add(new ToolStripSeparator());
+        root.DropDownItems.Add(update);
+        root.DropDownItems.Add(del);
+    }
+
+    private ProfileData CurrentProfile() => new()
+    {
+        Panes = _panes.Select(p => p.CurrentPath).ToList(),
+        Active = _active == null ? 0 : Math.Max(0, _panes.IndexOf(_active)),
+    };
+
+    private void SaveProfile()
+    {
+        var name = AskName(Loc.T("menu.profiles"), Loc.T("prof.name"));
+        if (string.IsNullOrWhiteSpace(name)) return;
+        name = name.Trim();
+        var all = LoadProfiles();
+        var existing = all.Keys.FirstOrDefault(k => string.Equals(k, name, StringComparison.CurrentCultureIgnoreCase));
+        if (existing != null)
+        {
+            if (MessageBox.Show(this, Loc.T("prof.confirmoverwrite", existing), Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes) return;
+            all.Remove(existing);
+        }
+        all[name] = CurrentProfile();
+        StoreProfiles(all);
+    }
+
+    private void LoadProfile(string name)
+    {
+        if (!LoadProfiles().TryGetValue(name, out var prof) || prof.Panes.Count == 0) return;
+        var old = _panes.ToList();
+        _panes.Clear();
+        _active = _previous = null;
+        foreach (var p in old) { _host.Controls.Remove(p); p.Dispose(); }
+        foreach (var path in prof.Panes) AddPane(NearestExisting(path), null);
+        var target = _panes[Math.Clamp(prof.Active, 0, _panes.Count - 1)];
+        SetActive(target);
+        target.FocusList();
+    }
+
+    private string? AskName(string title, string label)
+    {
+        using var f = new Form
+        {
+            Text = title, FormBorderStyle = FormBorderStyle.FixedDialog, StartPosition = FormStartPosition.CenterParent,
+            MaximizeBox = false, MinimizeBox = false, ShowInTaskbar = false, ClientSize = new Size(360, 100),
+        };
+        var l = new Label { Text = label, Left = 12, Top = 12, Width = 336, AutoSize = false };
+        var tb = new TextBox { Left = 12, Top = 36, Width = 336 };
+        var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Left = 192, Top = 66, Width = 75 };
+        var cancel = new Button { Text = Loc.T("btn.cancel"), DialogResult = DialogResult.Cancel, Left = 273, Top = 66, Width = 75 };
+        f.Controls.AddRange(new Control[] { l, tb, ok, cancel });
+        f.AcceptButton = ok;
+        f.CancelButton = cancel;
+        return f.ShowDialog(this) == DialogResult.OK ? tb.Text : null;
     }
 
     private void ApplyLanguage()
@@ -121,6 +281,7 @@ internal sealed class MainForm : Form
         Text = Loc.T("app.title");
         foreach (var (item, key) in _localized) { item.Text = Loc.T(key); item.ToolTipText = Loc.T(key); }
         foreach (var (code, mi) in _langItems) mi.Checked = code == Loc.Setting;
+        UpdatePathBar();
     }
 
     // ---------------------------------------------------------------- session (remembered between runs)
@@ -204,6 +365,7 @@ internal sealed class MainForm : Form
         p.MoveToOther += src => Transfer(true, src);
         p.FilesChanged += RefreshAll;
         p.PaneDropped += MovePane;
+        p.StatusChanged += src => { if (src == _active) UpdatePathBar(); };
         p.Navigate(path);
 
         var idx = after == null ? _panes.Count : _panes.IndexOf(after) + 1;
@@ -264,6 +426,7 @@ internal sealed class MainForm : Form
         if (_active != null && _panes.Contains(_active)) _previous = _active;
         _active = p;
         UpdateMarkers();
+        UpdatePathBar();
     }
 
     private void UpdateMarkers()

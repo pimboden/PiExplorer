@@ -49,6 +49,18 @@ internal static class Loc
         ["menu.language"] = new[] { "Language", "Sprache", "Idioma" },
         ["lang.auto"] = new[] { "Automatic (Windows language)", "Automatisch (Windows-Sprache)", "Automático (idioma de Windows)" },
 
+        // profiles
+        ["menu.profiles"] = new[] { "Profiles", "Profile", "Perfiles" },
+        ["prof.save"] = new[] { "Save current panes as profile…", "Aktuelle Bereiche als Profil speichern…", "Guardar paneles actuales como perfil…" },
+        ["prof.none"] = new[] { "(no saved profiles)", "(keine gespeicherten Profile)", "(sin perfiles guardados)" },
+        ["prof.update"] = new[] { "Update profile with current panes", "Profil mit aktuellen Bereichen aktualisieren", "Actualizar perfil con los paneles actuales" },
+        ["prof.confirmupdate"] = new[] { "Replace profile '{0}' with the current panes?", "Profil „{0}“ durch die aktuellen Bereiche ersetzen?", "¿Reemplazar el perfil «{0}» con los paneles actuales?" },
+        ["prof.delete"] = new[] { "Delete profile", "Profil löschen", "Eliminar perfil" },
+        ["prof.name"] = new[] { "Profile name:", "Profilname:", "Nombre del perfil:" },
+        ["prof.confirmdelete"] = new[] { "Delete profile '{0}'?", "Profil „{0}“ löschen?", "¿Eliminar el perfil «{0}»?" },
+        ["prof.confirmoverwrite"] = new[] { "Profile '{0}' already exists. Overwrite it?", "Das Profil „{0}“ existiert bereits. Überschreiben?", "El perfil «{0}» ya existe. ¿Sobrescribirlo?" },
+        ["btn.cancel"] = new[] { "Cancel", "Abbrechen", "Cancelar" },
+
         // toolbar
         ["tb.newpane"] = new[] { "New pane (Ctrl+T)", "Neuer Bereich (Strg+T)", "Nuevo panel (Ctrl+T)" },
         ["tb.closepane"] = new[] { "Close pane (Ctrl+W)", "Bereich schließen (Strg+W)", "Cerrar panel (Ctrl+W)" },
