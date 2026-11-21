@@ -6,6 +6,12 @@ the same working layout for repetitive tasks.
 
 ![PiExplorer main window](docs/main-window.png)
 
+## Download
+
+Get the latest `PiExplorer.exe` from the [Releases page](https://github.com/pimboden/PiExplorer/releases/latest) –
+no need to clone or compile. You only need the [.NET 11 Desktop Runtime](https://dotnet.microsoft.com/download/dotnet/11.0) (x64);
+if it is missing, the app tells you and offers the download.
+
 ## Features
 
 - **Multiple panes** side by side; drag a pane's grip to reorder, duplicate a pane, close it.
@@ -58,6 +64,15 @@ dotnet publish PiExplorer.csproj -c Release -o publish
 ```
 
 The result is `publish\PiExplorer.exe`.
+
+## Release
+
+Releases are built automatically by GitHub Actions. Push a version tag and the exe is attached to a new release:
+
+```powershell
+git tag v1.0.0
+git push origin v1.0.0
+```
 
 ## Simulate a missing .NET runtime
 
