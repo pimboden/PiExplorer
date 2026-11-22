@@ -223,7 +223,13 @@ internal sealed class FilePane : UserControl
 
     private void UpdateColors()
     {
-        _bar.BackColor = _dropHover ? Color.FromArgb(196, 232, 170) : _active ?Color.FromArgb(173, 214, 255) : _target ? Color.FromArgb(255, 226, 170) : SystemColors.Control;
+#pragma warning disable WFO5001
+        var dark = Application.IsDarkModeEnabled;
+#pragma warning restore WFO5001
+        _bar.BackColor = _dropHover ? (dark ? Color.FromArgb(52, 96, 40) : Color.FromArgb(196, 232, 170))
+            : _active ? (dark ? Color.FromArgb(34, 74, 124) : Color.FromArgb(173, 214, 255))
+            : _target ? (dark ? Color.FromArgb(120, 84, 24) : Color.FromArgb(255, 226, 170))
+            : SystemColors.Control;
         _status.BackColor = _bar.BackColor;
     }
 

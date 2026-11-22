@@ -47,6 +47,10 @@ internal static class Loc
         // menu
         ["menu.settings"] = new[] { "Settings", "Einstellungen", "Configuración" },
         ["menu.language"] = new[] { "Language", "Sprache", "Idioma" },
+        ["menu.colour"] = new[] { "Color mode", "Farbmodus", "Modo de color" },
+        ["colour.system"] = new[] { "System (Windows setting)", "System (Windows-Einstellung)", "Sistema (configuración de Windows)" },
+        ["colour.light"] = new[] { "Light", "Hell", "Claro" },
+        ["colour.dark"] = new[] { "Dark", "Dunkel", "Oscuro" },
         ["lang.auto"] = new[] { "Automatic (Windows language)", "Automatisch (Windows-Sprache)", "Automático (idioma de Windows)" },
 
         // profiles
