@@ -77,7 +77,8 @@ internal sealed class MainForm : Form
         }
         var start = _panes[Math.Clamp(session?.Active ?? 0, 0, _panes.Count - 1)];
         SetActive(start);
-        Shown += (_, _) => start.FocusList();
+        _skippedVersion = session?.SkippedVersion ?? "";
+        Shown += async (_, _) => { start.FocusList(); await CheckForUpdates(false); };
 
         RestoreWindow(session);
         FormClosing += (_, _) => SaveSession();
@@ -167,6 +168,12 @@ internal sealed class MainForm : Form
         }
         settings.DropDownItems.Add(colour);
 
+        var update = new ToolStripMenuItem();
+        _localized.Add((update, "menu.update"));
+        update.Click += async (_, _) => await CheckForUpdates(true);
+        settings.DropDownItems.Add(new ToolStripSeparator());
+        settings.DropDownItems.Add(update);
+
         var profiles = new ToolStripMenuItem();
         _localized.Add((profiles, "menu.profiles"));
         profiles.DropDownOpening += (_, _) => FillProfilesMenu(profiles);
@@ -176,6 +183,42 @@ internal sealed class MainForm : Form
         menu.Items.Add(profiles);
         menu.Items.Add(settings);
         return menu;
+    }
+
+    // ---------------------------------------------------------------- updates
+
+    private string _skippedVersion = ""; // release the user declined: not offered again automatically
+
+    /// <param name="manual">true = from the menu: ignore the skipped version and report every outcome.</param>
+    private async Task CheckForUpdates(bool manual)
+    {
+        try
+        {
+            var r = await Updater.CheckAsync();
+            if (r == null)
+            {
+                if (manual) MessageBox.Show(this, Loc.T("upd.uptodate", Updater.Current.ToString(3)), Text);
+                return;
+            }
+            if (!manual && r.Tag == _skippedVersion) return;
+            var yes = MessageBox.Show(this, Loc.T("upd.available", r.Version.ToString(3), Updater.Current.ToString(3)),
+                Text, MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes;
+            if (!yes) { _skippedVersion = r.Tag; return; }
+            UseWaitCursor = true;
+            try
+            {
+                _skippedVersion = "";
+                await Updater.InstallAsync(r);
+            }
+            finally { UseWaitCursor = false; }
+            SaveSession();
+            Environment.Exit(0);
+        }
+        catch (Exception ex)
+        {
+            if (manual) MessageBox.Show(this, Loc.T("upd.failed", ex.Message), Text, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            // automatic check at startup: stay silent (offline etc.)
+        }
     }
 
     // ---------------------------------------------------------------- profiles (named sets of panes)
@@ -342,6 +385,7 @@ internal sealed class MainForm : Form
         public bool Maximized { get; set; }
         public string Language { get; set; } = "auto";
         public string ColorMode { get; set; } = "system";
+        public string SkippedVersion { get; set; } = "";
     }
 
     private static readonly string SessionPath = Path.Combine(
@@ -368,6 +412,7 @@ internal sealed class MainForm : Form
                 Maximized = WindowState == FormWindowState.Maximized,
                 Language = Loc.Setting,
                 ColorMode = ThemeSetting,
+                SkippedVersion = _skippedVersion,
             };
             Directory.CreateDirectory(Path.GetDirectoryName(SessionPath)!);
             File.WriteAllText(SessionPath, System.Text.Json.JsonSerializer.Serialize(s));

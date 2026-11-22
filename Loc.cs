@@ -51,6 +51,10 @@ internal static class Loc
         ["colour.system"] = new[] { "System (Windows setting)", "System (Windows-Einstellung)", "Sistema (configuración de Windows)" },
         ["colour.light"] = new[] { "Light", "Hell", "Claro" },
         ["colour.dark"] = new[] { "Dark", "Dunkel", "Oscuro" },
+        ["menu.update"] = new[] { "Check for updates…", "Nach Updates suchen…", "Buscar actualizaciones…" },
+        ["upd.available"] = new[] { "Version {0} is available (you have {1}).\nDownload and install it now? PiExplorer will restart.", "Version {0} ist verfügbar (Sie haben {1}).\nJetzt herunterladen und installieren? PiExplorer wird neu gestartet.", "La versión {0} está disponible (tiene la {1}).\n¿Descargarla e instalarla ahora? PiExplorer se reiniciará." },
+        ["upd.uptodate"] = new[] { "You are using the latest version ({0}).", "Sie verwenden die neueste Version ({0}).", "Está usando la última versión ({0})." },
+        ["upd.failed"] = new[] { "Could not update:\n{0}", "Update nicht möglich:\n{0}", "No se pudo actualizar:\n{0}" },
         ["lang.auto"] = new[] { "Automatic (Windows language)", "Automatisch (Windows-Sprache)", "Automático (idioma de Windows)" },
 
         // profiles

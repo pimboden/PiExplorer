@@ -26,6 +26,9 @@ if it is missing, the app tells you and offers the download.
 - **Path bar** at the bottom showing the full path of the selected item (or the active pane's folder).
 - Remembers the last session (panes, window position, options).
 - **Dark mode**: follows the Windows setting by default; choose System / Light / Dark under *Settings → Color mode* (the app restarts and restores your panes).
+- **Updates**: on start the app checks GitHub for a newer release and asks whether to install it
+  (declining a version means it is not offered again automatically). *Settings → Check for updates…*
+  checks on demand. The new exe replaces the current one and the app restarts.
 - Languages: English, German, Spanish (follows the Windows language by default).
 
   ![Language menu](docs/language-menu.png)
