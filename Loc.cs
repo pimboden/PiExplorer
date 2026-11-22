@@ -55,6 +55,12 @@ internal static class Loc
         ["upd.available"] = new[] { "Version {0} is available (you have {1}).\nDownload and install it now? PiExplorer will restart.", "Version {0} ist verfügbar (Sie haben {1}).\nJetzt herunterladen und installieren? PiExplorer wird neu gestartet.", "La versión {0} está disponible (tiene la {1}).\n¿Descargarla e instalarla ahora? PiExplorer se reiniciará." },
         ["upd.uptodate"] = new[] { "You are using the latest version ({0}).", "Sie verwenden die neueste Version ({0}).", "Está usando la última versión ({0})." },
         ["upd.failed"] = new[] { "Could not update:\n{0}", "Update nicht möglich:\n{0}", "No se pudo actualizar:\n{0}" },
+        ["menu.about"] = new[] { "About PiExplorer…", "Über PiExplorer…", "Acerca de PiExplorer…" },
+        ["about.version"] = new[] { "Version {0}", "Version {0}", "Versión {0}" },
+        ["about.text"] = new[] {
+            "PiExplorer is a free hobby project, made just for fun.\nIt comes without any warranty and without support.\nFeel free to use it, but use it at your own risk.",
+            "PiExplorer ist ein kostenloses Hobbyprojekt, nur zum Spaß entstanden.\nEs gibt weder eine Garantie noch Support.\nSie dürfen es gerne nutzen, aber auf eigene Verantwortung.",
+            "PiExplorer es un proyecto de afición gratuito, hecho solo por diversión.\nNo ofrece garantía ni soporte.\nPuede usarlo libremente, pero bajo su propia responsabilidad." },
         ["lang.auto"] = new[] { "Automatic (Windows language)", "Automatisch (Windows-Sprache)", "Automático (idioma de Windows)" },
 
         // profiles

@@ -174,6 +174,11 @@ internal sealed class MainForm : Form
         settings.DropDownItems.Add(new ToolStripSeparator());
         settings.DropDownItems.Add(update);
 
+        var about = new ToolStripMenuItem();
+        _localized.Add((about, "menu.about"));
+        about.Click += (_, _) => ShowAbout();
+        settings.DropDownItems.Add(about);
+
         var profiles = new ToolStripMenuItem();
         _localized.Add((profiles, "menu.profiles"));
         profiles.DropDownOpening += (_, _) => FillProfilesMenu(profiles);
@@ -183,6 +188,31 @@ internal sealed class MainForm : Form
         menu.Items.Add(profiles);
         menu.Items.Add(settings);
         return menu;
+    }
+
+    // ---------------------------------------------------------------- about
+
+    private void ShowAbout()
+    {
+        const string url = "https://github.com/pimboden/PiExplorer";
+        using var f = new Form
+        {
+            Text = Loc.T("menu.about").TrimEnd('…'), FormBorderStyle = FormBorderStyle.FixedDialog, StartPosition = FormStartPosition.CenterParent,
+            MaximizeBox = false, MinimizeBox = false, ShowInTaskbar = false, ClientSize = new Size(440, 220), Icon = Icon,
+        };
+        var title = new Label { Text = "PiExplorer", Left = 16, Top = 14, Width = 408, Height = 30, Font = new Font(Font.FontFamily, 14f, FontStyle.Bold) };
+        var ver = new Label { Text = Loc.T("about.version", Updater.Current.ToString(3)), Left = 16, Top = 46, Width = 408, AutoSize = false };
+        var text = new Label { Text = Loc.T("about.text"), Left = 16, Top = 72, Width = 408, Height = 60, AutoSize = false };
+        var link = new LinkLabel { Text = url, Left = 16, Top = 136, Width = 408, AutoSize = false };
+        link.LinkClicked += (_, _) =>
+        {
+            try { System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(url) { UseShellExecute = true }); } catch { }
+        };
+        var ok = new Button { Text = "OK", DialogResult = DialogResult.OK, Left = 349, Top = 172, Width = 75, Height = 30 };
+        f.Controls.AddRange(new Control[] { title, ver, text, link, ok });
+        f.AcceptButton = ok;
+        f.CancelButton = ok;
+        f.ShowDialog(this);
     }
 
     // ---------------------------------------------------------------- updates
