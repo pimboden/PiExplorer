@@ -33,6 +33,8 @@ internal sealed class MainForm : Form
             AppOptions.ShowHidden = session.ShowHidden;
         }
         Loc.Apply(session?.Language ?? "auto"); // "auto" = Windows display language
+        ThemeSetting = session?.ColorMode ?? "system";
+        ApplyColorMode(false);
 
         tools.ImageScalingSize = new Size(20, 20);
         tools.Items.Add(Btn(Glyphs.Add, Color.SeaGreen, "tb.newpane", NewPaneFromActive));
@@ -84,6 +86,25 @@ internal sealed class MainForm : Form
     // toolbar/menu items whose text follows the selected language (item -> translation key)
     private readonly List<(ToolStripItem Item, string Key)> _localized = new();
     private readonly Dictionary<string, ToolStripMenuItem> _langItems = new();
+    private readonly Dictionary<string, ToolStripMenuItem> _colourItems = new();
+
+    /// <summary>"system" (follow Windows), "light" or "dark".</summary>
+    private string ThemeSetting = "system";
+
+#pragma warning disable WFO5001 // dark mode API is experimental in WinForms
+    private void ApplyColorMode(bool live)
+    {
+        if (ThemeSetting is not ("system" or "light" or "dark")) ThemeSetting = "system";
+        Application.SetColorMode(ThemeSetting switch
+        {
+            "dark" => SystemColorMode.Dark,
+            "light" => SystemColorMode.Classic,
+            _ => SystemColorMode.System,
+        });
+        foreach (var (code, mi) in _colourItems) mi.Checked = code == ThemeSetting;
+        if (live) { UpdateMarkers(); Invalidate(true); }
+    }
+#pragma warning restore WFO5001
 
     private ToolStripButton Btn(string glyph, Color color, string key, Action a)
     {
@@ -124,6 +145,27 @@ internal sealed class MainForm : Form
         AddLang("es", null, "Español");
 
         settings.DropDownItems.Add(language);
+
+        var colour = new ToolStripMenuItem();
+        _localized.Add((colour, "menu.colour"));
+        foreach (var (code, key) in new[] { ("system", "colour.system"), ("light", "colour.light"), ("dark", "colour.dark") })
+        {
+            var mi = new ToolStripMenuItem(Loc.T(key));
+            _localized.Add((mi, key));
+            var c = code;
+            mi.Click += (_, _) =>
+            {
+                if (c == ThemeSetting) return;
+                ThemeSetting = c;
+                // WinForms cannot fully re-theme existing controls at runtime, so restart (session is restored)
+                SaveSession();
+                Application.Restart();
+                Environment.Exit(0);
+            };
+            _colourItems[code] = mi;
+            colour.DropDownItems.Add(mi);
+        }
+        settings.DropDownItems.Add(colour);
 
         var profiles = new ToolStripMenuItem();
         _localized.Add((profiles, "menu.profiles"));
@@ -281,6 +323,7 @@ internal sealed class MainForm : Form
         Text = Loc.T("app.title");
         foreach (var (item, key) in _localized) { item.Text = Loc.T(key); item.ToolTipText = Loc.T(key); }
         foreach (var (code, mi) in _langItems) mi.Checked = code == Loc.Setting;
+        foreach (var (code, mi) in _colourItems) mi.Checked = code == ThemeSetting;
         UpdatePathBar();
     }
 
@@ -298,6 +341,7 @@ internal sealed class MainForm : Form
         public int Height { get; set; }
         public bool Maximized { get; set; }
         public string Language { get; set; } = "auto";
+        public string ColorMode { get; set; } = "system";
     }
 
     private static readonly string SessionPath = Path.Combine(
@@ -323,6 +367,7 @@ internal sealed class MainForm : Form
                 X = b.X, Y = b.Y, Width = b.Width, Height = b.Height,
                 Maximized = WindowState == FormWindowState.Maximized,
                 Language = Loc.Setting,
+                ColorMode = ThemeSetting,
             };
             Directory.CreateDirectory(Path.GetDirectoryName(SessionPath)!);
             File.WriteAllText(SessionPath, System.Text.Json.JsonSerializer.Serialize(s));
