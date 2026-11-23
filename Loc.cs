@@ -83,6 +83,8 @@ internal static class Loc
         ["tb.newfolder"] = new[] { "New folder (F7)", "Neuer Ordner (F7)", "Nueva carpeta (F7)" },
         ["tb.delete"] = new[] { "Delete (Del)", "Löschen (Entf)", "Eliminar (Supr)" },
         ["tb.terminal"] = new[] { "Open Terminal", "Terminal öffnen", "Abrir terminal" },
+        ["tb.preview"] = new[] { "Preview pane", "Vorschaubereich", "Panel de vista previa" },
+        ["msg.nopreview"] = new[] { "No preview available", "Keine Vorschau verfügbar", "Vista previa no disponible" },
         ["tb.foldersnew"] = new[] { "Folders open in new pane", "Ordner in neuem Bereich öffnen", "Abrir carpetas en un panel nuevo" },
         ["tb.hidden"] = new[] { "Show hidden", "Versteckte anzeigen", "Mostrar ocultos" },
 

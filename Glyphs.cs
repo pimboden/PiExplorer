@@ -24,6 +24,8 @@ internal static class Glyphs
 
     public const string Terminal = ""; // Segoe MDL2 "CommandPrompt"
 
+    public const string Preview = ""; // Segoe MDL2 "View"
+
     public const string Add ="", Close = "", Copy = "", Move = "", NewFolder = "",
         Delete = "", NewWindow = "", Hidden = "", Pin = "", Star = "";
 }

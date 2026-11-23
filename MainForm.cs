@@ -31,7 +31,12 @@ internal sealed class MainForm : Form
         {
             AppOptions.FoldersOpenInNewPane = session.FoldersOpenInNewPane;
             AppOptions.ShowHidden = session.ShowHidden;
+            _previewOn = session.Preview;
+            _preview.Width = Math.Clamp(session.PreviewWidth, 200, 1200);
         }
+        _preview.NoPreviewText = () => Loc.T("msg.nopreview");
+        _preview.Visible = _previewSplitter.Visible = _previewOn;
+        _previewTimer.Tick += (_, _) => { _previewTimer.Stop(); UpdatePreview(); };
         Loc.Apply(session?.Language ?? "auto"); // "auto" = Windows display language
         ThemeSetting = session?.ColorMode ?? "system";
         ApplyColorMode(false);
@@ -46,6 +51,7 @@ internal sealed class MainForm : Form
         tools.Items.Add(Btn(Glyphs.Delete, Color.Firebrick, "tb.delete", () => _active?.DeleteSelected()));
         tools.Items.Add(Btn(Glyphs.Terminal, Color.SlateGray, "tb.terminal", () => TerminalLauncher.Open(_active?.CurrentPath ?? "")));
         tools.Items.Add(new ToolStripSeparator());
+        tools.Items.Add(Toggle(Glyphs.Preview, "tb.preview", _previewOn, v => { _previewOn = v; ApplyPreviewVisibility(); }));
         tools.Items.Add(Toggle(Glyphs.NewWindow, "tb.foldersnew", AppOptions.FoldersOpenInNewPane, v => AppOptions.FoldersOpenInNewPane = v));
         tools.Items.Add(Toggle(Glyphs.Hidden, "tb.hidden", AppOptions.ShowHidden, v => { AppOptions.ShowHidden = v; foreach (var p in _panes) p.Refresh(); }));
 
@@ -61,6 +67,8 @@ internal sealed class MainForm : Form
         var splitter = new Splitter { Dock = DockStyle.Left, Width = 4 };
 
         Controls.Add(_host);
+        Controls.Add(_previewSplitter);
+        Controls.Add(_preview);
         Controls.Add(splitter);
         Controls.Add(favs);
         Controls.Add(_pathBar); // added after favs so it spans the full window width
@@ -83,6 +91,27 @@ internal sealed class MainForm : Form
 
         RestoreWindow(session);
         FormClosing += (_, _) => SaveSession();
+    }
+
+    // ---------------------------------------------------------------- preview pane (far right, optional)
+    private bool _previewOn;
+    private readonly PreviewPanel _preview = new() { Dock = DockStyle.Right, Width = 380 };
+    private readonly Splitter _previewSplitter = new() { Dock = DockStyle.Right, Width = 4 };
+    private readonly System.Windows.Forms.Timer _previewTimer = new() { Interval = 200 }; // debounce while arrowing through files
+
+    private void ApplyPreviewVisibility()
+    {
+        _preview.Visible = _previewSplitter.Visible = _previewOn;
+        if (_previewOn) UpdatePreview(); else _preview.ShowFile(null);
+    }
+
+    private void SchedulePreview() { if (_previewOn) { _previewTimer.Stop(); _previewTimer.Start(); } }
+
+    private void UpdatePreview()
+    {
+        if (!_previewOn) return;
+        var sel = _active?.SelectedPaths;
+        _preview.ShowFile(sel is { Count: 1 } ? sel[0] : null);
     }
 
     // toolbar/menu items whose text follows the selected language (item -> translation key)
@@ -409,6 +438,8 @@ internal sealed class MainForm : Form
         public int Active { get; set; }
         public bool FoldersOpenInNewPane { get; set; } = true;
         public bool ShowHidden { get; set; }
+        public bool Preview { get; set; }
+        public int PreviewWidth { get; set; } = 380;
         public int X { get; set; }
         public int Y { get; set; }
         public int Width { get; set; }
@@ -439,6 +470,8 @@ internal sealed class MainForm : Form
                 Active = _active == null ? 0 : Math.Max(0, _panes.IndexOf(_active)),
                 FoldersOpenInNewPane = AppOptions.FoldersOpenInNewPane,
                 ShowHidden = AppOptions.ShowHidden,
+                Preview = _previewOn,
+                PreviewWidth = _preview.Width,
                 X = b.X, Y = b.Y, Width = b.Width, Height = b.Height,
                 Maximized = WindowState == FormWindowState.Maximized,
                 Language = Loc.Setting,
@@ -486,7 +519,7 @@ internal sealed class MainForm : Form
         p.MoveToOther += src => Transfer(true, src);
         p.FilesChanged += RefreshAll;
         p.PaneDropped += MovePane;
-        p.StatusChanged += src => { if (src == _active) UpdatePathBar(); };
+        p.StatusChanged += src => { if (src == _active) { UpdatePathBar(); SchedulePreview(); } };
         p.Navigate(path);
 
         var idx = after == null ? _panes.Count : _panes.IndexOf(after) + 1;
@@ -548,6 +581,7 @@ internal sealed class MainForm : Form
         _active = p;
         UpdateMarkers();
         UpdatePathBar();
+        SchedulePreview();
     }
 
     private void UpdateMarkers()
