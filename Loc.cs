@@ -82,6 +82,7 @@ internal static class Loc
         ["tb.move"] = new[] { "Move → other pane (F6)", "Verschieben → anderer Bereich (F6)", "Mover → otro panel (F6)" },
         ["tb.newfolder"] = new[] { "New folder (F7)", "Neuer Ordner (F7)", "Nueva carpeta (F7)" },
         ["tb.delete"] = new[] { "Delete (Del)", "Löschen (Entf)", "Eliminar (Supr)" },
+        ["tb.terminal"] = new[] { "Open Terminal", "Terminal öffnen", "Abrir terminal" },
         ["tb.foldersnew"] = new[] { "Folders open in new pane", "Ordner in neuem Bereich öffnen", "Abrir carpetas en un panel nuevo" },
         ["tb.hidden"] = new[] { "Show hidden", "Versteckte anzeigen", "Mostrar ocultos" },
 

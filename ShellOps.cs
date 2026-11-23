@@ -9,6 +9,32 @@ internal static class AppOptions
     public static bool ShowHidden = false;
 }
 
+internal static class TerminalLauncher
+{
+    /// <summary>
+    /// Opens Windows Terminal in <paramref name="folder"/> using the user's default profile
+    /// (PowerShell, cmd, Git Bash, WSL...), so bash-based profiles work too. Falls back to cmd.exe.
+    /// </summary>
+    public static void Open(string folder)
+    {
+        if (string.IsNullOrEmpty(folder) || !Directory.Exists(folder))
+            folder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+
+        try
+        {
+            var psi = new System.Diagnostics.ProcessStartInfo("wt.exe") { WorkingDirectory = folder, UseShellExecute = false };
+            psi.ArgumentList.Add("-d");
+            psi.ArgumentList.Add(folder); // ArgumentList handles quoting, incl. drive roots like C:\
+            System.Diagnostics.Process.Start(psi)?.Dispose();
+        }
+        catch (System.ComponentModel.Win32Exception)
+        {
+            // Windows Terminal not installed
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo("cmd.exe") { WorkingDirectory = folder, UseShellExecute = true })?.Dispose();
+        }
+    }
+}
+
 /// <summary>Native Explorer copy/move/delete (progress dialog, conflict prompts, recycle bin).</summary>
 internal static class ShellOps
 {

@@ -22,6 +22,8 @@ internal static class Glyphs
         return bmp;
     }
 
-    public const string Add = "", Close = "", Copy = "", Move = "", NewFolder = "",
+    public const string Terminal = ""; // Segoe MDL2 "CommandPrompt"
+
+    public const string Add ="", Close = "", Copy = "", Move = "", NewFolder = "",
         Delete = "", NewWindow = "", Hidden = "", Pin = "", Star = "";
 }

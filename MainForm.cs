@@ -44,6 +44,7 @@ internal sealed class MainForm : Form
         tools.Items.Add(Btn(Glyphs.Move, Color.DarkOrange, "tb.move", () => Transfer(true)));
         tools.Items.Add(Btn(Glyphs.NewFolder, Color.Goldenrod, "tb.newfolder", () => _active?.CreateFolder()));
         tools.Items.Add(Btn(Glyphs.Delete, Color.Firebrick, "tb.delete", () => _active?.DeleteSelected()));
+        tools.Items.Add(Btn(Glyphs.Terminal, Color.SlateGray, "tb.terminal", () => TerminalLauncher.Open(_active?.CurrentPath ?? "")));
         tools.Items.Add(new ToolStripSeparator());
         tools.Items.Add(Toggle(Glyphs.NewWindow, "tb.foldersnew", AppOptions.FoldersOpenInNewPane, v => AppOptions.FoldersOpenInNewPane = v));
         tools.Items.Add(Toggle(Glyphs.Hidden, "tb.hidden", AppOptions.ShowHidden, v => { AppOptions.ShowHidden = v; foreach (var p in _panes) p.Refresh(); }));
